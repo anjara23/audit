@@ -43,8 +43,10 @@ function AdminPage() {
   const fetchData = (isFirstLoad = false) => {
     if (isFirstLoad) setLoading(true);
     Promise.all([
-      fetch("http://127.0.0.1:8000/admin/audit").then((r) => r.json()),
-      fetch("http://127.0.0.1:8000/admin/stats").then((r) => r.json()),
+      //fetch("http://127.0.0.1:8000/admin/audit").then((r) => r.json()),
+      //fetch("http://127.0.0.1:8000/admin/stats").then((r) => r.json()),
+      fetch(`${import.meta.env.VITE_API_URL}/admin/audit`).then((r) => r.json()),
+      fetch(`${import.meta.env.VITE_API_URL}/admin/stats`).then((r) => r.json()),
     ])
       .then(([auditData, statsData]) => {
         setAudits(auditData);

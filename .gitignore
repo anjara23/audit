@@ -9,6 +9,14 @@ frontend/node_modules/
 frontend/dist/
 frontend/.env
 
+
+# Docker
+*.log
+.dockerignore
+
+# Base de données (ne jamais pousser les dumps avec données personnelles)
+backend/auditDb.sql
+
 # Divers
 .DS_Store
-*.log
+Thumbs.db
