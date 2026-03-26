@@ -75,16 +75,19 @@ jobs:
 
       - name: Lancer le backend en arrière-plan
         env:
-          DATABASE_URL: postgres://postgres:Aero2024@localhost:5432/auditDb
+          DATABASE_URL: postgres://postgres:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432/auditDb
         run: |
           cd backend
           uvicorn main:app --host 0.0.0.0 --port 8000 > backend.log 2>&1 &
-          sleep 10
-          cat backend.log 
+          sleep 15
+          cat backend.log
       
-      - name: Tester que l'APIR répond
+      - name: Afficher les logs backend
+        run: cat backend.log
+      
+      - name: Tester que l'API répond
         run: |
-          curl -fail http://localhost:8000/docs || exit 1
+          curl --fail http://localhost:8000/docs || exit 1
           echo "Backend est opérationnel"
 
       # étape 3 : installer Node.js et les dépendances frontend
