@@ -3,9 +3,9 @@ name: CI/CD - Audit stock
 # déclencheur à chaque push ou pull request sur la branche main
 on:
   push:
-    branches: [main]
+    branches: [main, try]
   pull_request:
-    branches: [main]
+    branches: [main, try]
   
 # définir les jobs à exécuter (les étapes du pipeline)
 jobs:
@@ -38,7 +38,7 @@ jobs:
         image: postgres:16-alpine
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: Aero2024
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: auditDb
         ports:
           - 5432:5432
@@ -96,49 +96,49 @@ jobs:
           echo "Frontend compilé"
 
   push-images:
-  name: Push Docker Hub
-  runs-on: ubuntu-latest
-  needs: test
-  if: github.event_name == 'push' && github.ref == 'refs/heads/main' # ne push que sur la branche main
+    name: Push Docker Hub
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/try' # ne push que sur la branche try pour l'instant mais d'habitude on push sur main
 
-  steps:
-    #checkout du code
-    - name: Checkout code
-      uses: actions/checkout@v4
+    steps:
+      #checkout du code
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    #se connecter à Docker Hub
-    - name: Se connecter à Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }} # $ {{..}} injection de varianble dans GitHub Actions
-        password: ${{ secrets.DOCKER_PASSWORD }} # secrets. données chiffrées et stockées dans les paramètres du repo GitHub
-    
-    - name: Configurer Docker Buildx
-      uses: docker/setup-buildx-action@v3
-    
-    - name: Builder et pusher l'image backend
-      uses: docker/build-push-action@v5
-      with:
-        context: ./backend # le chemin du Dockerfile
-        push: true # indiquer qu'on veut pousser l'image après le build
-        tags: |
-          anjara23/audit-backend:latest
-          anjara23/audit-backend:${{ github.sha }}
-    
-    - name: Builder et pusher l'image frontend
-      uses: docker/build-push-action@v5
-      with:
-        context: ./frontend 
-        push: true
-        tags: |
-          anjara23/audit-frontend:latest
-          anjara23/audit-frontend:${{ github.sha }}
-    
-    - name: Résumé du déploiement
-      run: |
-        echo "   Images publiées sur Docker Hub"
-        echo "   anjara23/audit-backend:latest"
-        echo "   anjara23/audit-frontend:latest"
-        echo "   Tag commit : ${{ github.sha }}"
+      #se connecter à Docker Hub
+      - name: Se connecter à Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }} # $ {{..}} injection de varianble dans GitHub Actions
+          password: ${{ secrets.DOCKER_PASSWORD }} # secrets. données chiffrées et stockées dans les paramètres du repo GitHub
+      
+      - name: Configurer Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Builder et pusher l'image backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend # le chemin du Dockerfile
+          push: true # indiquer qu'on veut pousser l'image après le build
+          tags: |
+            anjara23/audit-backend:latest
+            anjara23/audit-backend:${{ github.sha }}
+      
+      - name: Builder et pusher l'image frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend 
+          push: true
+          tags: |
+            anjara23/audit-frontend:latest
+            anjara23/audit-frontend:${{ github.sha }}
+      
+      - name: Résumé du déploiement
+        run: |
+          echo "   Images publiées sur Docker Hub"
+          echo "   anjara23/audit-backend:latest"
+          echo "   anjara23/audit-frontend:latest"
+          echo "   Tag commit : ${{ github.sha }}"
 
         
