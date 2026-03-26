@@ -138,13 +138,13 @@ function UserPage() {
     }
     if (modalApprov === "add") {
       //await fetch("http://127.0.0.1:8000/user/approvisionnement"
-      await fetch(`${import.meta.env.VITE_API_URL}/approvisionnement`, {
+      await fetch(`${import.meta.env.VITE_API_URL}/user/approvisionnement`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formApprov), 
       });
       addToast("Approvisionnement ajouté avec succès !");
     } else if (modalApprov === "edit" && editingApprov) {
-      await fetch(`${import.meta.env.VITE_API_URL}/approvisionnement/${editingApprov.id}`, {
+      await fetch(`${import.meta.env.VITE_API_URL}/user/approvisionnement/${editingApprov.id}`, {
         method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formApprov),
       });
@@ -158,7 +158,7 @@ function UserPage() {
     setConfirm({
       message: "Voulez-vous vraiment supprimer cet approvisionnement ?",
       onConfirm: async () => {
-        await fetch(`${import.meta.env.VITE_API_URL}/approvisionnement/${id}`, { method: "DELETE" });
+        await fetch(`${import.meta.env.VITE_API_URL}/user/approvisionnement/${id}`, { method: "DELETE" });
         addToast("Approvisionnement supprimé.");
         setConfirm(null); fetchData();
       },
@@ -180,13 +180,13 @@ function UserPage() {
   const handleSaveProduit = async () => {
     if (!formProduit.design) { addToast("Le nom du produit est requis.", "error"); return; }
     if (modalProduit === "add") {
-      await fetch(`${import.meta.env.VITE_API_URL}/produits`, {
+      await fetch(`${import.meta.env.VITE_API_URL}/user/produits`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formProduit),
       });
       addToast("Produit ajouté avec succès !");
     } else if (modalProduit === "edit" && editingProduit) {
-      await fetch(`${import.meta.env.VITE_API_URL}/produits/${editingProduit.id_produit}`, {
+      await fetch(`${import.meta.env.VITE_API_URL}/user/produits/${editingProduit.id_produit}`, {
         method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formProduit),
       });
@@ -199,7 +199,7 @@ function UserPage() {
     setConfirm({
       message: "Voulez-vous vraiment supprimer ce produit ?",
       onConfirm: async () => {
-        await fetch(`${import.meta.env.VITE_API_URL}/produits/${id}`, { method: "DELETE" });
+        await fetch(`${import.meta.env.VITE_API_URL}/user/produits/${id}`, { method: "DELETE" });
         addToast("Produit supprimé.");
         setConfirm(null); fetchData();
       },
@@ -221,13 +221,13 @@ function UserPage() {
   const handleSaveFournisseur = async () => {
     if (!formFournisseur.nom) { addToast("Le nom du fournisseur est requis.", "error"); return; }
     if (modalFournisseur === "add") {
-      await fetch(`${import.meta.env.VITE_API_URL}/fournisseurs`, {
+      await fetch(`${import.meta.env.VITE_API_URL}/user/fournisseurs`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formFournisseur),
       });
       addToast("Fournisseur ajouté avec succès !");
     } else if (modalFournisseur === "edit" && editingFournisseur) {
-      await fetch(`${import.meta.env.VITE_API_URL}/fournisseurs/${editingFournisseur.id_frs}`, {
+      await fetch(`${import.meta.env.VITE_API_URL}/user/fournisseurs/${editingFournisseur.id_frs}`, {
         method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formFournisseur),
       });
