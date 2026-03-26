@@ -7,33 +7,30 @@ on:
   pull_request:
     branches: [main, try]
   
-# définir les jobs à exécuter (les étapes du pipeline)
 jobs:
 
+  # ── ÉTAPE 1 : BUILD ────────────────────────────────────────────
   build:
     name: Build
     runs-on: ubuntu-latest
 
     steps:
-      # étape 1 : checkout du code
       - name: Checkout code
-        uses: actions/checkout@v4 # presque comme git clone
+        uses: actions/checkout@v4
 
-      # étape 2 : builder l'image backend
       - name: Builder l'image backend
         run: docker build -t audit-backend ./backend
 
-      # étape 3 : builder l'image frontend
       - name: Builder l'image frontend
         run: docker build -t audit-frontend ./frontend
 
+  # ── ÉTAPE 2 : TEST ─────────────────────────────────────────────
   test:
     name: Test
     runs-on: ubuntu-latest
     needs: build
 
     services:
-      # lancer un conteneur PostgreSQL pour les tests
       postgres:
         image: postgres:16-alpine
         env:
@@ -47,21 +44,18 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 5
-        # le syntaxe >- colle tous ces lignes en une seule ligne
 
     steps:
-      # étape 1 : checkout du code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # étape 2 : installer Python et les dépendances
       - name: Installer Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
       
-      - name: Installer les dépendances
-        run: | # le | indique que les lignes suivantes font partie de la même commande
+      - name: Installer les dépendances backend
+        run: |
           cd backend
           pip install -r requirements.txt
 
@@ -75,29 +69,31 @@ jobs:
 
       - name: Lancer le backend en arrière-plan
         env:
-          DATABASE_URL: postgres://postgres:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432/auditDb
+          # postgresql:// au lieu de postgres:// (important pour SQLAlchemy)
+          DATABASE_URL: postgresql://postgres:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432/auditDb
         run: |
           cd backend
-          uvicorn main:app --host 0.0.0.0 --port 8000 > backend.log 2>&1 &
+          # ../backend.log = racine du projet, pas dans backend/
+          uvicorn main:app --host 0.0.0.0 --port 8000 > ../backend.log 2>&1 &
           sleep 15
-          cat backend.log
-      
+
+      # Step séparé : cat depuis la racine où le fichier est créé
       - name: Afficher les logs backend
+        if: always()  # s'exécute même si le step précédent échoue
         run: cat backend.log
-      
+
       - name: Tester que l'API répond
         run: |
           curl --fail http://localhost:8000/docs || exit 1
-          echo "Backend est opérationnel"
+          echo " Backend est opérationnel"
 
-      # étape 3 : installer Node.js et les dépendances frontend
       - name: Installer Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
       
       - name: Installer les dépendances frontend
-        run: |   
+        run: |
           cd frontend
           npm install
       
@@ -107,23 +103,22 @@ jobs:
           npm run build || exit 1
           echo "Frontend compilé"
 
+  # ── ÉTAPE 3 : PUSH DOCKER HUB ──────────────────────────────────
   push-images:
     name: Push Docker Hub
     runs-on: ubuntu-latest
     needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/try' # ne push que sur la branche try pour l'instant mais d'habitude on push sur main
+    if: github.event_name == 'push' && github.ref == 'refs/heads/try'
 
     steps:
-      #checkout du code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      #se connecter à Docker Hub
       - name: Se connecter à Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_USERNAME }} # $ {{..}} injection de varianble dans GitHub Actions
-          password: ${{ secrets.DOCKER_PASSWORD }} # secrets. données chiffrées et stockées dans les paramètres du repo GitHub
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
       
       - name: Configurer Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -131,8 +126,8 @@ jobs:
       - name: Builder et pusher l'image backend
         uses: docker/build-push-action@v5
         with:
-          context: ./backend # le chemin du Dockerfile
-          push: true # indiquer qu'on veut pousser l'image après le build
+          context: ./backend
+          push: true
           tags: |
             anjara23/audit-backend:latest
             anjara23/audit-backend:${{ github.sha }}
@@ -140,7 +135,7 @@ jobs:
       - name: Builder et pusher l'image frontend
         uses: docker/build-push-action@v5
         with:
-          context: ./frontend 
+          context: ./frontend
           push: true
           tags: |
             anjara23/audit-frontend:latest
@@ -152,5 +147,3 @@ jobs:
           echo "   anjara23/audit-backend:latest"
           echo "   anjara23/audit-frontend:latest"
           echo "   Tag commit : ${{ github.sha }}"
-
-        
